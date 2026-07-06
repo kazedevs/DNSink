@@ -1,8 +1,12 @@
+const { loadBlockList } = require('./blocklist')
+
 const dns2 = require('dns2')
+
 
 
 const {Packet} = dns2;
 
+const { isBlocked } = loadBlockList()
 const server = dns2.createServer({
     udp: true,
     handle: async (request, send, rinfo) => {
@@ -11,8 +15,12 @@ const server = dns2.createServer({
         const domain = question.name.toLowerCase();
         try{
             const client = new dns2({ nameServers: ['1.1.1.1']})
+            if(isBlocked(domain) == true){
+                console.log(`BLOCKED DOMAIN => ${domain}`)
+                send(response)
+                return;
+            }
             const result = await client.resolve(domain, 'A')
-            console.log('Upstream result:', JSON.stringify(result.answers))
             response.answers = result.answers
             console.log(`${rinfo.address}:${rinfo.port} => ${domain}`)
             console.log(`Question Type: ${question.type}`)
