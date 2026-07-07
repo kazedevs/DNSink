@@ -1,5 +1,6 @@
 const { loadBlockList } = require('./blocklist')
 const { createTable, logquery } = require('./db')
+const { broadcast } = require('./socket')
 
 const dns2 = require('dns2')
 
@@ -22,6 +23,7 @@ const server = dns2.createServer({
                 console.log(`BLOCKED DOMAIN => ${domain}`)
                 send(response)
                 logquery({domain, blocked: true, client: rinfo.address})
+                broadcast({domain, blocked: true, client: rinfo.address, timestamp: new Date().toISOString()})
                 return;
             }
             const result = await client.resolve(domain, 'A')
@@ -29,9 +31,11 @@ const server = dns2.createServer({
             console.log(`${rinfo.address}:${rinfo.port} => ${domain}`)
             console.log(`Question Type: ${question.type}`)
             logquery({domain, blocked: false, client: rinfo.address})
+            broadcast({domain, blocked: false, client: rinfo.address, timestamp: new Date().toISOString()})
         }catch(err){
             console.error('Error processing request: ', err.message)
             logquery({domain, blocked: true, client: rinfo.address})
+            broadcast({domain, blocked: true, client: rinfo.address, timestamp: new Date().toISOString()})
         }
         send(response)
     }

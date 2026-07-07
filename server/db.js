@@ -29,4 +29,13 @@ const logquery = ({domain, blocked, client}) => {
     });
 }
 
-module.exports = { createTable, logquery }
+function getStats(){
+    const total = db.prepare(`SELECT COUNT(*) as count FROM queries`).get().count;
+    const blocked = db.prepare(`SELECT COUNT(*) as count FROM queries WHERE blocked = 1`).get().count;
+    const recent = db.prepare(`SELECT * FROM queries ORDER BY timestamp DESC LIMIT 50`).all();
+    return {total, blocked, recent}
+}
+
+
+
+module.exports = { createTable, logquery, getStats}
