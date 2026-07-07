@@ -1,12 +1,15 @@
 const { loadBlockList } = require('./blocklist')
+const { createTable, logquery } = require('./db')
 
 const dns2 = require('dns2')
 
 
 
 const {Packet} = dns2;
-
 const { isBlocked } = loadBlockList()
+
+createTable();
+
 const server = dns2.createServer({
     udp: true,
     handle: async (request, send, rinfo) => {
@@ -18,14 +21,17 @@ const server = dns2.createServer({
             if(isBlocked(domain) == true){
                 console.log(`BLOCKED DOMAIN => ${domain}`)
                 send(response)
+                logquery({domain, blocked: true, client: rinfo.address})
                 return;
             }
             const result = await client.resolve(domain, 'A')
             response.answers = result.answers
             console.log(`${rinfo.address}:${rinfo.port} => ${domain}`)
             console.log(`Question Type: ${question.type}`)
+            logquery({domain, blocked: false, client: rinfo.address})
         }catch(err){
             console.error('Error processing request: ', err.message)
+            logquery({domain, blocked: true, client: rinfo.address})
         }
         send(response)
     }
