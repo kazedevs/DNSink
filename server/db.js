@@ -33,7 +33,8 @@ function getStats(){
     const total = db.prepare(`SELECT COUNT(*) as count FROM queries`).get().count;
     const blocked = db.prepare(`SELECT COUNT(*) as count FROM queries WHERE blocked = 1`).get().count;
     const recent = db.prepare(`SELECT * FROM queries ORDER BY timestamp DESC LIMIT 50`).all();
-    return {total, blocked, recent}
+    const topBlocked = db.prepare(`SELECT domain, COUNT(*) as count FROM queries WHERE blocked = 1 GROUP BY domain ORDER BY count DESC LIMIT 10`).all();
+    return {total, blocked, recent, topBlocked}
 }
 
 
